@@ -14,16 +14,19 @@ final class MediciplineItem {
     var medicineFrequenciesTake: Int
     var addedMedicineDate: Date
     var isBeforeAndAfterEat: Bool
+    var medicineTimes: [Date]
     
     init(
         medicineName: String,
         medicineFrequenciesTake: Int,
         addedMedicineDate: Date,
-        isBeforeAndAfterEat: Bool
+        isBeforeAndAfterEat: Bool,
+        medicineTimes: [Date]
     ) {
         self.medicineName = medicineName
         self.medicineFrequenciesTake = medicineFrequenciesTake
         self.addedMedicineDate = addedMedicineDate
         self.isBeforeAndAfterEat = isBeforeAndAfterEat
+        self.medicineTimes = medicineTimes
     }
 }

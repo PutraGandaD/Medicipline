@@ -18,6 +18,8 @@ struct AddMedicineListView: View {
     @State private var addedMedicineDate = Date() // Default to the current date
     @State private var isBeforeAndAfterEat = false
     
+    @State private var medicineTimes: [Date] = [Date()]
+    
     var body: some View {
         NavigationStack {
             Form {
@@ -26,9 +28,37 @@ struct AddMedicineListView: View {
                         .textFieldStyle(.roundedBorder)
                         .autocapitalization(.words)
                     
-                    Stepper("Frequency: \(medicineFrequenciesTake) times per day", value: $medicineFrequenciesTake, in: 1...10) // Stepper for frequency
+                    Stepper(
+                        "Frequency: \(medicineFrequenciesTake) times per day",
+                        value: $medicineFrequenciesTake,
+                        in: 1...10
+                    )
+                    .onChange(of: medicineFrequenciesTake) { oldValue, newValue in
+                        
+                        if newValue > medicineTimes.count {
+                            // Add new time(s)
+                            medicineTimes.append(contentsOf: Array(
+                                repeating: Date(),
+                                count: newValue - medicineTimes.count
+                            ))
+                        } else if newValue < medicineTimes.count {
+                            // Remove extra time(s)
+                            medicineTimes.removeLast(medicineTimes.count - newValue)
+                        }
+                    }
                     
                     DatePicker("Date to Start", selection: $addedMedicineDate, displayedComponents: .date) // Date picker for the start date
+                    
+                    Section(header: Text("Medicine Times")) {
+                        ForEach(medicineTimes.indices, id: \.self) { index in
+                            DatePicker(
+                                "Time \(index + 1)",
+                                selection: $medicineTimes[index],
+                                displayedComponents: .hourAndMinute
+                            )
+                            .datePickerStyle(.wheel)
+                        }
+                    }
                 }
                 
                 Button("Save Medicine") {
@@ -48,7 +78,8 @@ struct AddMedicineListView: View {
             medicineName: medicineName,
             medicineFrequenciesTake: medicineFrequenciesTake,
             addedMedicineDate: addedMedicineDate,
-            isBeforeAndAfterEat: isBeforeAndAfterEat
+            isBeforeAndAfterEat: isBeforeAndAfterEat,
+            medicineTimes: medicineTimes
         )
         context.insert(newMedicine) // Add the new medicine to the database
         
