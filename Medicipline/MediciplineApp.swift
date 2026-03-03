@@ -12,14 +12,21 @@ import SwiftData
 struct MediciplineApp: App {
     var sharedModelContainer: ModelContainer = {
         let schema = Schema([
-            Item.self,
+            MediciplineItem.self
         ])
-        let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
+
+        let configuration = ModelConfiguration(
+            schema: schema,
+            groupContainer: .identifier("group.com.putragandad.Medicipline")
+        )
 
         do {
-            return try ModelContainer(for: schema, configurations: [modelConfiguration])
+            return try ModelContainer(
+                for: schema,
+                configurations: configuration
+            )
         } catch {
-            fatalError("Could not create ModelContainer: \(error)")
+            fatalError("Failed to create shared container: \(error)")
         }
     }()
 

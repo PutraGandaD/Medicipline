@@ -9,53 +9,54 @@ import SwiftUI
 import SwiftData
 
 struct ContentView: View {
-    @Environment(\.modelContext) private var modelContext
-    @Query private var items: [Item]
-
+    @Environment(\.modelContext) private var context
+    
+    @Query private var medicineList: [MediciplineItem]
+    
+    @State private var showingAddScreen = false // State to manage showing the Add Medicine screen
+    
     var body: some View {
-        NavigationSplitView {
-            List {
-                ForEach(items) { item in
-                    NavigationLink {
-                        Text("Item at \(item.timestamp, format: Date.FormatStyle(date: .numeric, time: .standard))")
-                    } label: {
-                        Text(item.timestamp, format: Date.FormatStyle(date: .numeric, time: .standard))
+        NavigationStack {
+            VStack {
+                List {
+                    ForEach(medicineList) { medicine in
+                        VStack(alignment: .leading) {
+                            Text(medicine.medicineName)
+                                .font(.headline)
+                            
+                            Text("Frequency: \(medicine.medicineFrequenciesTake) times/day")
+                                .font(.subheadline)
+                                .foregroundColor(.gray)
+                            
+                            Text("Start Date: \(medicine.addedMedicineDate, style: .date)")
+                                .font(.subheadline)
+                                .foregroundColor(.gray)
+                        }
                     }
                 }
-                .onDelete(perform: deleteItems)
-            }
-            .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    EditButton()
+                .navigationTitle("Medicines")
+                
+                // "Add" button at the bottom
+                Button(action: {
+                    showingAddScreen = true
+                }) {
+                    Text("Add New Medicine")
+                        .font(.headline)
+                        .foregroundColor(.white)
+                        .padding()
+                        .background(Color.blue)
+                        .cornerRadius(10)
                 }
-                ToolbarItem {
-                    Button(action: addItem) {
-                        Label("Add Item", systemImage: "plus")
-                    }
+                .padding()
+                .sheet(isPresented: $showingAddScreen) {
+                    AddMedicineListView() // Show the Add Medicine screen
                 }
-            }
-        } detail: {
-            Text("Select an item")
-        }
-    }
-
-    private func addItem() {
-        withAnimation {
-            let newItem = Item(timestamp: Date())
-            modelContext.insert(newItem)
-        }
-    }
-
-    private func deleteItems(offsets: IndexSet) {
-        withAnimation {
-            for index in offsets {
-                modelContext.delete(items[index])
             }
         }
     }
 }
 
-#Preview {
-    ContentView()
-        .modelContainer(for: Item.self, inMemory: true)
-}
+//#Preview {
+//    ContentView()
+//        .modelContainer(for: MediciplineItem.self, inMemory: true)
+//}
