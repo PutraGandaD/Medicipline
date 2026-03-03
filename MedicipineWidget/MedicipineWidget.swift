@@ -50,11 +50,14 @@ struct MedicipineWidgetEntryView : View {
 
     var body: some View {
         VStack {
-            LazyVStack(content: {
-                ForEach(model, id: \.self) { item in
-                    Text(item.medicineName)
-                }
-            })
+//            LazyVStack(content: {
+//                ForEach(model, id: \.self) { item in
+//                    Text(item.medicineName)
+//                }
+//            })
+            let sharedDefaults = UserDefaults(suiteName: "group.com.putragandad.Medicipline")
+            let needTakeMedicineName = sharedDefaults?.string(forKey: "medicineName") as? String ?? "No Medicine Recently"
+            Text(needTakeMedicineName)
         }
     }
 }

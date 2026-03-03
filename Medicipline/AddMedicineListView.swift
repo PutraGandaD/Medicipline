@@ -52,7 +52,10 @@ struct AddMedicineListView: View {
         )
         context.insert(newMedicine) // Add the new medicine to the database
         
-        try? context.save() 
+        try? context.save()
+        
+        let sharedDefaults = UserDefaults(suiteName: "group.com.putragandad.Medicipline")
+        sharedDefaults?.set(medicineName, forKey: "medicineName")
         
         WidgetCenter.shared.reloadAllTimelines()
         
