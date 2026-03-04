@@ -16,7 +16,7 @@ final class MediciplineItem {
     var addedMedicineDate: Date
     var isBeforeAndAfterEat: Bool
     var medicineTimes: Date
-    var isTaken: Bool = false
+    var lastTakenDate: Date?
     // last modified
     
     init(
@@ -26,7 +26,6 @@ final class MediciplineItem {
         addedMedicineDate: Date,
         isBeforeAndAfterEat: Bool,
         medicineTimes: Date,
-        isTaken: Bool = false
     ) {
         self.id = id
         self.medicineName = medicineName
@@ -34,6 +33,5 @@ final class MediciplineItem {
         self.addedMedicineDate = addedMedicineDate
         self.isBeforeAndAfterEat = isBeforeAndAfterEat
         self.medicineTimes = medicineTimes
-        self.isTaken = isTaken
     }
 }

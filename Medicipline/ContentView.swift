@@ -121,7 +121,7 @@ struct ContentView: View {
         if index == 0 {
             return timePassed
         } else {
-            let previousTaken = allMedicines[index - 1].isTaken
+            let previousTaken = isTakenToday(allMedicines[index - 1])
             return previousTaken && timePassed
         }
     }
@@ -155,14 +155,26 @@ struct ContentView: View {
     private func sortedByTime(_ medicines: [MediciplineItem]) -> [MediciplineItem] {
         medicines.sorted { a, b in
             
-            // 1️⃣ Not taken comes first
-            if a.isTaken != b.isTaken {
-                return !a.isTaken && b.isTaken
+            let aTaken = isTakenToday(a)
+            let bTaken = isTakenToday(b)
+
+            // 1️⃣ Not taken first
+            if aTaken != bTaken {
+                return !aTaken && bTaken
             }
-            
-            // 2️⃣ If same state → sort by time
+
+            // 2️⃣ If same taken state → sort by time
             return a.medicineTimes < b.medicineTimes
         }
+    }
+    
+    func isTakenToday(_ medicine: MediciplineItem) -> Bool {
+        
+        guard let lastTaken = medicine.lastTakenDate else {
+            return false
+        }
+        
+        return Calendar.current.isDateInToday(lastTaken)
     }
     
     @ViewBuilder
@@ -193,24 +205,24 @@ struct ContentView: View {
             
             Button {
                 if unlocked {
-                    medicine.isTaken.toggle()
+                    medicine.lastTakenDate = Date()
                     try? context.save()
                 }
             } label: {
-                Image(systemName: medicine.isTaken ? "checkmark.circle.fill" : "circle")
-                    .foregroundColor(medicine.isTaken ? .green : (unlocked ? .blue : .gray))
+                Image(systemName: isTakenToday(medicine) ? "checkmark.circle.fill" : "circle")
+                    .foregroundColor(isTakenToday(medicine) ? .green : (unlocked ? .blue : .gray))
                     .font(.title2)
             }
             /*disabled(!unlocked)*/
-            .disabled(!unlocked || medicine.isTaken)
+            .disabled(!unlocked || isTakenToday(medicine))
         }
         .padding()
         .background(
             RoundedRectangle(cornerRadius: 16)
                 .fill(Color(.systemGray6))
         )
-        .opacity(medicine.isTaken ? 0.4 : (unlocked ? 1.0 : 0.5))
-        .strikethrough(medicine.isTaken)
+        .opacity(isTakenToday(medicine) ? 0.4 : (unlocked ? 1.0 : 0.5))
+        .strikethrough(isTakenToday(medicine))
     }
 }
 
