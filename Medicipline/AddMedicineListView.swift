@@ -13,7 +13,7 @@ struct AddMedicineListView: View {
     @Environment(\.modelContext) private var context // Access SwiftData
     @Environment(\.dismiss) private var dismiss // Dismiss the screen after saving
     
-    @State private var medicineName = "" // The state to hold the new medicine name
+    @State private var medicineNames: [String] = [""]
     @State private var medicineFrequenciesTake = 1 // Default frequency is 1
     @State private var addedMedicineDate = Date() // Default to the current date
     @State private var isBeforeAndAfterEat = false
@@ -24,9 +24,31 @@ struct AddMedicineListView: View {
         NavigationStack {
             Form {
                 Section(header: Text("Medicine Details")) {
-                    TextField("Enter medicine name", text: $medicineName)
-                        .textFieldStyle(.roundedBorder)
-                        .autocapitalization(.words)
+                    Section(header: Text("Medicine Names")) {
+                        
+                        ForEach(medicineNames.indices, id: \.self) { index in
+                            HStack {
+                                TextField("Enter medicine name",
+                                          text: $medicineNames[index])
+                                    .textFieldStyle(.roundedBorder)
+                                    .autocapitalization(.words)
+                                
+                                if medicineNames.count > 1 {
+                                    Button(role: .destructive) {
+                                        medicineNames.remove(at: index)
+                                    } label: {
+                                        Image(systemName: "minus.circle.fill")
+                                    }
+                                }
+                            }
+                        }
+                        
+                        Button {
+                            medicineNames.append("")
+                        } label: {
+                            Label("Add Another Medicine", systemImage: "plus.circle.fill")
+                        }
+                    }
                     
                     Stepper(
                         "Frequency: \(medicineFrequenciesTake) times per day",
@@ -47,6 +69,8 @@ struct AddMedicineListView: View {
                         }
                     }
                     
+                    Toggle("Take After Eat", isOn: $isBeforeAndAfterEat)
+                    
                     DatePicker("Date to Start", selection: $addedMedicineDate, displayedComponents: .date) // Date picker for the start date
                     
                     Section(header: Text("Medicine Times")) {
@@ -64,7 +88,7 @@ struct AddMedicineListView: View {
                 Button("Save Medicine") {
                     saveMedicine()
                 }
-                .disabled(medicineName.isEmpty) // Disable button if name is empty
+                .disabled(medicineNames.isEmpty) // Disable button if name is empty
             }
             .navigationTitle("Add Medicine")
             .navigationBarItems(trailing: Button("Cancel") {
@@ -74,23 +98,79 @@ struct AddMedicineListView: View {
     }
     
     private func saveMedicine() {
-        let newMedicine = MediciplineItem(
-            medicineName: medicineName,
-            medicineFrequenciesTake: medicineFrequenciesTake,
-            addedMedicineDate: addedMedicineDate,
-            isBeforeAndAfterEat: isBeforeAndAfterEat,
-            medicineTimes: medicineTimes
-        )
-        context.insert(newMedicine) // Add the new medicine to the database
+        
+        let filteredNames = medicineNames
+            .map { $0.trimmingCharacters(in: .whitespaces) }
+            .filter { !$0.isEmpty }
+        
+        guard !filteredNames.isEmpty else { return }
+        
+        for index in medicineTimes.indices {
+            
+            let newMedicine = MediciplineItem(
+                medicineName: filteredNames, // 🔥 whole array
+                medicineFrequenciesTake: medicineFrequenciesTake,
+                addedMedicineDate: addedMedicineDate,
+                isBeforeAndAfterEat: isBeforeAndAfterEat,
+                medicineTimes: medicineTimes[index] // index-based
+            )
+            
+            context.insert(newMedicine)
+            
+            scheduleNotification(
+                for: medicineTimes[index],
+                medicineNames: filteredNames,
+                isAfterEat: isBeforeAndAfterEat
+            )
+        }
         
         try? context.save()
         
-        let sharedDefaults = UserDefaults(suiteName: "group.com.putragandad.Medicipline")
-        sharedDefaults?.set(medicineName, forKey: "medicineName")
-        
         WidgetCenter.shared.reloadAllTimelines()
         
-        dismiss() // Dismiss the Add screen after saving
+        dismiss()
+    }
+    
+    private func scheduleNotification(
+        for time: Date,
+        medicineNames: [String],
+        isAfterEat: Bool
+    ) {
+        let content = UNMutableNotificationContent()
+        
+        let joinedNames = medicineNames.joined(separator: ", ")
+        let eatText = isBeforeAndAfterEat ? "After Eat" : "Before Eat"
+        
+        content.title = "💊 Time to take your medication!"
+            content.body = """
+            \(eatText)
+            \(joinedNames)
+            """
+        
+        // Extract hour & minute
+        let calendar = Calendar.current
+        let hour = calendar.component(.hour, from: time)
+        let minute = calendar.component(.minute, from: time)
+        
+        var dateComponents = DateComponents()
+        dateComponents.hour = hour
+        dateComponents.minute = minute
+        
+        // Repeat daily
+        let trigger = UNCalendarNotificationTrigger(
+            dateMatching: dateComponents,
+            repeats: true
+        )
+        
+        let identifier = UUID().uuidString
+        
+        let request = UNNotificationRequest(
+            identifier: identifier,
+            content: content,
+            trigger: trigger
+        )
+        
+        UNUserNotificationCenter.current().add(request)
     }
 }
 
